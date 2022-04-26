@@ -1,7 +1,7 @@
 
 # GCP Workload Identity Federation using SAML Credentials
 
-This is a sample procedure that will exchange a `SAML Assertion` for a GCP credential.
+This is a sample procedure that will exchange a `SAML Assertion` for a `GCP credential` using [Workload Identity Federation](https://cloud.google.com/iam/docs/configuring-workload-identity-federation#saml)
 
 You can use the GCP credential then to access any service the mapped principal has GCP IAM permissions on.
 
