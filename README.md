@@ -1,5 +1,5 @@
 
-# Exchange SAML Credentials for GCP Credentials using GCP STS Service
+# GCP Workload Identity Federation using SAML Credentials
 
 This is a sample procedure that will exchange a `SAML Assertion` for a GCP credential.
 
@@ -9,8 +9,10 @@ This article and repo is the third part that explores how to use the workload id
 
 The first two articles in this series are at
 
-* [Exchange Generic OIDC Credentials for GCP Credentials using GCP STS Service](https://github.com/salrashid123/gcpcompat-oidc)
-* [Exchange AWS Credentials for GCP Credentials using GCP STS Service](https://github.com/salrashid123/gcpcompat-aws)
+also see
+- [GCP Workload Identity Federation using OIDC Credentials](https://github.com/salrashid123/gcpcompat-oidc)
+- [GCP Workload Identity Federation using SAML Credentials](https://github.com/salrashid123/gcpcompat-saml)
+- [GCP Workload Identity Federation using AWS Credentials](https://github.com/salrashid123/gcpcompat-aws)
 
 And for reference, see: [Understanding workload identity federation](https://blog.salrashid.dev/articles/2021/understanding_workload_identity_federation/)
 
