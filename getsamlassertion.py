@@ -36,8 +36,14 @@ def _generate_response(now, later, username, login_req_id, recipient, audience):
     resp_rand_id = getrandom_samlID()
     rand_id_assert = getrandom_samlID()
     sigtmpl = ''
+    resp = ''
 
-    sigtmpl = ('<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">'
+    isSAMLProfile = False
+    # Respond with SAML Profile format
+    if 'https://accounts.google.com/samlrp/acs' in recipient:
+        #log(' >> Using SAML Profile format for ' + recipient)
+        isSAMLProfile = True
+        sigtmpl = ('<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">'
                 '<ds:SignedInfo>'
                 '<ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>'
                 '<ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1" />'
@@ -57,7 +63,7 @@ def _generate_response(now, later, username, login_req_id, recipient, audience):
                 '</ds:X509Data>'
                 '</ds:KeyInfo>'
                 '</ds:Signature>') % (resp_rand_id)
-    resp = ('<saml2p:Response '
+        resp = ('<saml2p:Response '
                 'xmlns:saml2p="urn:oasis:names:tc:SAML:2.0:protocol" '
                 'ID="%s" InResponseTo="%s" Version="2.0" IssueInstant="%s" >'
                 '<saml2:Issuer xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion" Format="urn:oasis:names:tc:SAML:2.0:nameid-format:entity">%s</saml2:Issuer>'
@@ -69,7 +75,7 @@ def _generate_response(now, later, username, login_req_id, recipient, audience):
                 'Version="2.0" ID="%s" IssueInstant="%s">'
                 '<saml2:Issuer Format="urn:oasis:names:tc:SAML:2.0:nameid-format:entity">%s</saml2:Issuer>'
                 '<saml2:Subject>'
-                '<saml2:NameID  Format="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">%s</saml2:NameID>'
+                '<saml2:NameID  Format="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified">%s</saml2:NameID>'
                 '<saml2:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">'
                 '<saml2:SubjectConfirmationData InResponseTo="%s" Recipient="%s" NotOnOrAfter="%s"/>'
                 '</saml2:SubjectConfirmation>'
@@ -85,13 +91,17 @@ def _generate_response(now, later, username, login_req_id, recipient, audience):
                 'urn:oasis:names:tc:SAML:2.0:ac:classes:PasswordProtectedTransport'
                 '</saml2:AuthnContextClassRef>'
                 '</saml2:AuthnContext>'
-                '</saml2:AuthnStatement>'
-                '<saml2:AttributeStatement>'
-                '<saml2:Attribute Name="groups" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:basic">'
-                '<saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">group1</saml2:AttributeValue>'
-                '<saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">group2</saml2:AttributeValue>'                
-                '</saml2:Attribute>'
-                '</saml2:AttributeStatement>'
+                '</saml2:AuthnStatement>'    
+                # '<saml2:AttributeStatement xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
+                # '<saml2:Attribute Name="mygroups">'
+                # '<saml2:AttributeValue xsi:type="xsd:string">'
+                # 'ssoappgroup'
+                # '</saml2:AttributeValue>'
+                # '<saml2:AttributeValue xsi:type="xsd:string">'
+                # 'group1_3'
+                # '</saml2:AttributeValue>'
+                # '</saml2:Attribute>'
+                # '</saml2:AttributeStatement>'
                 '</saml2:Assertion>'
                 '</saml2p:Response>') % (resp_rand_id, login_req_id, now,
                                         saml_issuer, sigtmpl, rand_id_assert, now,
@@ -99,9 +109,86 @@ def _generate_response(now, later, username, login_req_id, recipient, audience):
                                         login_req_id, recipient, later,
                                         now, later, audience,
                                         now, rand_id_assert)
+    else:
+        #log(' >> Using Google Domain format for ' + recipient)
+        sigtmpl = ('<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">'
+                '<ds:SignedInfo>'
+                '<ds:CanonicalizationMethod '
+                'Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" />'
+                '<ds:SignatureMethod '
+                'Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1" />'
+                '<ds:Reference URI="#%s">'
+                '<ds:Transforms>'
+                '<ds:Transform Algorithm='
+                '"http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>'
+                '</ds:Transforms>'
+                '<ds:DigestMethod Algorithm='
+                '"http://www.w3.org/2000/09/xmldsig#sha1" />'
+                '<ds:DigestValue></ds:DigestValue>'
+                '</ds:Reference>'
+                '</ds:SignedInfo>'
+                '<ds:SignatureValue/>'
+                '<ds:KeyInfo>'
+                '<ds:X509Data>'
+                '<ds:X509Certificate></ds:X509Certificate>'
+                '</ds:X509Data>'
+                '</ds:KeyInfo>'
+                '</ds:Signature>') % (resp_rand_id)
+        resp = ('<samlp:Response '
+                'xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" '
+                'xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" '
+                'ID="%s" InResponseTo="%s" Version="2.0" IssueInstant="%s" Destination="%s">'
+                '<saml:Issuer>%s</saml:Issuer>'
+                '%s'
+                '<samlp:Status>'
+                '<samlp:StatusCode '
+                'Value="urn:oasis:names:tc:SAML:2.0:status:Success"/>'
+                '</samlp:Status>'
+                '<saml:Assertion '
+                'Version="2.0" ID="%s" IssueInstant="%s">'
+                '<saml:Issuer>%s</saml:Issuer>'
+                '<saml:Subject>'
+                '<saml:NameID>%s</saml:NameID>'
+                '<saml:SubjectConfirmation '
+                'Method="urn:oasis:names:tc:SAML:2.0:cm:bearer">'
+                '<saml:SubjectConfirmationData '
+                'InResponseTo="%s" Recipient="%s" NotOnOrAfter="%s"/>'
+                '</saml:SubjectConfirmation>'
+                '</saml:Subject>'
+                '<saml:Conditions NotBefore="%s" NotOnOrAfter="%s">'
+                '<saml:AudienceRestriction>'
+                '<saml:Audience>%s</saml:Audience>'
+                '</saml:AudienceRestriction>'
+                '</saml:Conditions>'
+                '<saml:AuthnStatement AuthnInstant="%s" SessionIndex="%s">'
+                '<saml:AuthnContext>'
+                '<saml:AuthnContextClassRef>'
+                'urn:oasis:names:tc:SAML:2.0:ac:classes:Password'
+                '</saml:AuthnContextClassRef>'
+                '</saml:AuthnContext>'
+                '</saml:AuthnStatement>'
+                # '<saml:AttributeStatement>'
+                # '<saml:Attribute Name="mygroups">'
+                # '<saml:AttributeValue>'
+                # 'ssoappgroup'
+                # '</saml:AttributeValue>'
+                # '<saml:AttributeValue>'
+                # 'group1_3'
+                # '</saml:AttributeValue>'
+                # '</saml:Attribute>'
+                # '</saml:AttributeStatement>'               
+                '</saml:Assertion>'
+                '</samlp:Response>') % (resp_rand_id, login_req_id, now, recipient,
+                                        saml_issuer, sigtmpl, rand_id_assert, now,
+                                        saml_issuer, username,
+                                        login_req_id, recipient, later,
+                                        now, later, audience,
+                                        now, rand_id_assert)
 
-
-    resp = '<!DOCTYPE saml2p:Response [<!ATTLIST saml2p:Response ID ID #IMPLIED>]>' + resp
+    if isSAMLProfile:
+      resp = '<!DOCTYPE saml2p:Response [<!ATTLIST saml2p:Response ID ID #IMPLIED>]>' + resp
+    else:
+      resp = '<!DOCTYPE samlp:Response [<!ATTLIST samlp:Response ID ID #IMPLIED>]>' + resp
     resp = _signXML(resp)
     return resp
 
