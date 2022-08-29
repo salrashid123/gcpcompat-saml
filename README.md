@@ -42,12 +42,27 @@ Anyway...
 
 #### Configure identity pool provider.
 
-In the project where you want to set this demo aup
+Identify the projects and organization
 
 ```bash
 export PROJECT_ID=`gcloud config get-value core/project`
 export PROJECT_NUMBER=`gcloud projects describe $PROJECT_ID --format='value(projectNumber)'`
+export ORGANIZATION_ID=1234567
+```
+First allow SAML providers through domain policy:  
 
+[Manage constraints for workload identity federation](https://cloud.google.com/iam/docs/manage-workload-identity-pools-providers#restrict)
+
+_To allow federation from from SAML identity providers, create a constraint allowing the special keyword KEY_UPLOAD._
+
+```bash
+gcloud resource-manager org-policies allow constraints/iam.workloadIdentityPoolProviders \
+     KEY_UPLOAD --organization=ORGANIZATION_ID
+```
+
+In the project where you want to set this demo up
+
+```bash
 gcloud beta iam workload-identity-pools create saml-pool-a \
     --location="global" \
     --description="SAML Pool " \
